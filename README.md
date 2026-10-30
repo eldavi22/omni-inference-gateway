@@ -1,28 +1,39 @@
 # Omni-Inference Gateway
 
-A modular **FastAPI inference gateway** that routes prompts to configured inference backends. Source code reconstructed from the owner's original archived module listing.
+Omni-Inference Gateway is a Python project I built to experiment with a single API that can work with different language model inference engines. Instead of tying an application to one runtime, the gateway checks which backends are available, chooses a compatible one, and can try another if a request fails.
 
-## What is implemented
+The application uses FastAPI and includes adapters for vLLM, SGLang, and llama.cpp. A small PyTorch network scores routing options based on five input features. I initialized its weights manually, so this is a routing experiment rather than a model trained on a dataset.
 
-- `main.py`: async FastAPI endpoints `GET /health`, `POST /v1/generate`, `GET /metrics/latency`, with fallback attempts and normalized responses.
-- `router_engine.py`: deterministic five-feature, three-output PyTorch routing network with **explicitly initialized weights** (not a model trained from a dataset).
-- `backends/`: adapters for vLLM, SGLang and llama.cpp.
-- `utils/fast_tokenizer.py`: Hugging Face tokenization.
-- `metrics/jax_latency.py`: JAX/JIT latency summary.
+Hugging Face Tokenizers handles tokenization, while JAX provides latency summaries. The API exposes three endpoints:
 
-## Setup
+- `GET /health` shows backend availability.
+- `POST /v1/generate` accepts generation requests and returns a consistent response format.
+- `GET /metrics/latency` reports timing statistics from completed requests.
 
-Requires Python 3.11+ and platform-specific backend/model installations. The included `requirements.txt` documents full dependencies, some of which require additional GPU/OS support. For a CPU-only routing test, install only `torch` and run `python -m unittest discover -s tests -v`.
+## Getting started
 
-Configure a compatible model/runtime first, then set environment variables from `.env.example` in your shell. Run `python main.py` after all necessary dependencies are installed.
+You'll need Python 3.11 or newer. Actual text generation also requires a compatible inference runtime and model files. The full set of dependencies is listed in `requirements.txt`, although some packages need specific operating systems or GPU environments.
 
-## Quality controls
+Configure the variables described in `.env.example` for the backends you want to use. Once the required dependencies and models are installed, start the API with:
 
-`python -m compileall -q main.py router_engine.py backends utils metrics tests` checks Python syntax. The included unit tests check router output shape, availability, fallback ordering, explicit backend preference and safe handling when no backend is configured. GitHub Actions installs CPU-only PyTorch and runs checks.
+```bash
+python main.py
+```
 
-## Limits and ownership
+The repository's `backends/` folder contains the runtime adapters. Routing logic lives in `router_engine.py`, tokenization utilities are under `utils/`, and JAX metrics are under `metrics/`.
 
-- No multi-engine production load test is claimed. Real vLLM/SGLang/GGUF installations and licensed model files are needed for end-to-end generation.
-- This router uses hand-set weights; it is **not** a trained ML checkpoint.
-- The code is shared under MIT; the license does not cover third-party models, binaries or datasets.
-- The original archived code used five-dimensional input and a three-class layer but omitted a `forward()` method. This package adds that method, without changing the intended weights.
+## Testing
+
+I included focused tests for the routing logic, backend availability, selection order, fallback behavior, and the case where no backend is configured.
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+You can run the routing tests with CPU-only PyTorch without installing every inference engine. GitHub Actions runs these tests and checks the Python syntax on each push and pull request.
+
+## Current scope
+
+The gateway's routing and adapter code is available here, but I haven't included model weights or claimed that all three engines have been benchmarked together in production. End-to-end generation depends on the individual runtimes and models being installed and configured.
+
+The published version was assembled from my archived source files, with a missing PyTorch `forward()` method added during cleanup. The project code is released under the MIT license; external model files and third-party libraries have their own terms.
