@@ -1,0 +1,10 @@
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic>=2.8
+tokenizers>=0.20
+torch>=2.4
+jax>=0.4.30
+jaxlib>=0.4.30
+vllm>=0.6
+sglang>=0.4
+llama-cpp-python>=0.3

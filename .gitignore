@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+.env
+.env.*
+!.env.example
+*.gguf
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.onnx
+model_cache/
